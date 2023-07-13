@@ -10,7 +10,7 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
 });
 
 interface ProductListingProps {
-  product: Product
+  product: Product;
 }
 
 const ProductListing: React.FC<ProductListingProps> = ({ product }) => {
@@ -53,9 +53,13 @@ const ProductListing: React.FC<ProductListingProps> = ({ product }) => {
             className="border rounded-md w-14 ml-3 pl-2"
           />
         </div>
-        <Button type="submit" className="float-right">
-          +<span className="ml-2">Add</span>
-        </Button>
+        
+          <Button
+            type="submit"
+            className="float-right"
+          >
+            +<span className="ml-2">Add</span>
+          </Button>
       </form>
     </li>
   );

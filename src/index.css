@@ -2,3 +2,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.button-comp-enter {
+    translate: none;
+    scale: 1;
+}
+
+.button-comp-enter-active {
+    translate: 0 -3px;
+    scale: 1.10;
+    transition: all 150ms ease-out;
+}
+
+.button-comp-exit {
+    translate: 0 -3px;
+    scale: 1.10;
+}
+
+.button-comp-exit-active {
+    translate: none;
+    scale: 1;
+    transition: all 150ms ease-out;
+}

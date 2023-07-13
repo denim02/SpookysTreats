@@ -57,7 +57,7 @@ const CartModal: React.FC<CartModalProps> = ({onCloseModal}) => {
           type="button"
           className="text-price-color border-2 border-price-color py-2 bg-white"
         >
-          Close
+          <span className="hover:border-b-2 border-price-color transition duration-500">Close</span>
         </Button>
         {cartCtx.entries.length !== 0 && (
           <Button className="bg-price-color py-2">Order</Button>
