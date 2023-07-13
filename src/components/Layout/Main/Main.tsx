@@ -1,6 +1,6 @@
 import HeroSection from "./HeroSection";
 import heroImage from "../../../assets/hero-section-img.jpg";
-import React, { ReactElement, useEffect } from "react";
+import React, { useEffect } from "react";
 import ProductsList from "../../Meals/ProductsList";
 import useHttp from "../../../hooks/use-http";
 import Product from "../../../models/Product";
@@ -17,12 +17,21 @@ const Main: React.FC = () => {
     void sendRequest();
   }, [sendRequest]);
 
-  let content: string | ReactElement = "No products are currently available...";
+  let message = "";
 
-  if (isAwaiting) content = "Loading...";
-  else if (data && data.length > 0 && !error)
-    content = <ProductsList products={data} />;
-  else if (error) content = error;
+  if (isAwaiting) message = "Loading...";
+  else if (error) message = error;
+  else if (!data || data.length === 0)
+    message = "No products are currently available...";
+
+  const displayedContent =
+    message === "" && data ? (
+      <ProductsList products={data} />
+    ) : (
+      <p className="text-black text-center font-sans font-semibold">
+        {message}
+      </p>
+    );
 
   return (
     <main>
@@ -34,7 +43,7 @@ const Main: React.FC = () => {
       />
 
       {/* Menu */}
-      <div className="mt-48 mb-12">{content}</div>
+      <div className="mt-48 mb-12">{displayedContent}</div>
     </main>
   );
 };
