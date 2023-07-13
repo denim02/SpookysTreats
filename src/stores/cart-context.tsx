@@ -3,67 +3,68 @@ import Product from "../models/Product";
 import CartEntry from "../models/CartEntry";
 
 interface CartContextType {
-    items: CartEntry[],
-    addToCart: (item: Product, amountToAdd: number ) => void,
-    removeFromCart: (item: Product) => void
+  entries: CartEntry[];
+  addToCart: (product: Product, amountToAdd?: number) => void;
+  removeFromCart: (product: Product) => void;
 }
 
 const CartContext = React.createContext<CartContextType>({} as CartContextType);
 
 const CartContextProvider: React.FC<PropsWithChildren> = (props) => {
-  const [items, setItems] = useState<CartEntry[]>([]);
+  const [entries, setEntries] = useState<CartEntry[]>([]);
 
-  const addToCart = (item: Product, amountToAdd = 1) => {
-    setItems((prevState) => {
+  const addToCart = (product: Product, amountToAdd = 1) => {
+    console.log("before setEntries called", amountToAdd);
+    setEntries((prevState) => {
+      console.log("called");
+
       // Check if empty
-      if (items.length === 0)
-        return [
-          new CartEntry(item, amountToAdd)
-        ];
-
-      // Copy state array to modify the amount of the element
-      const copyPrevState = [...prevState];
+      if (entries.length === 0) return [new CartEntry(product, amountToAdd)];
 
       // Check if ID is already in the array
-      const index = copyPrevState.findIndex(
-        (element) => element.item.id === item.id
+      const index = prevState.findIndex(
+        (entry) => entry.product.id === product.id
       );
 
       if (index >= 0) {
-        copyPrevState[index].amount += amountToAdd;
-        return copyPrevState;
+        return prevState
+          .filter((_, entryIndex) => entryIndex !== index)
+          .concat(
+            new CartEntry(
+              prevState[index].product,
+              prevState[index].amount + amountToAdd
+            )
+          );
       } else {
-        return [
-          ...prevState,
-          new CartEntry(item, amountToAdd)
-        ];
+        return [...prevState, new CartEntry(product, amountToAdd)];
       }
     });
   };
 
-  const removeFromCart = (item: Product) => {
-    setItems((prevState) => {
-      if (items.length === 0) return [];
+  const removeFromCart = (product: Product) => {
+    setEntries((prevState) => {
+      if (entries.length === 0) return [];
 
       const index = prevState.findIndex(
-        (element) => element.item.id === item.id
+        (entry) => entry.product.id === product.id
       );
-      const copyPrevState = [...prevState];
 
       if (prevState[index].amount === 1) {
-        copyPrevState.splice(index, 1);
+        return prevState.filter((_, entryIndex) => entryIndex !== index);
       } else {
-        copyPrevState[index].amount -= 1;
+        return prevState
+          .filter((_, entryIndex) => entryIndex !== index)
+          .concat(
+            new CartEntry(prevState[index].product, prevState[index].amount - 1)
+          );
       }
-
-      return copyPrevState;
     });
   };
 
   return (
     <CartContext.Provider
       value={{
-        items: items,
+        entries: entries,
         addToCart: addToCart,
         removeFromCart: removeFromCart,
       }}
