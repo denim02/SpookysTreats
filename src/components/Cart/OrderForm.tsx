@@ -1,6 +1,6 @@
-import React, { useContext, useReducer } from "react";
+import React, { useContext, useReducer, useRef } from "react";
 import Button from "../Core/Button";
-import InputBox from "../Core/InputBox";
+import InputBox, { InputHandle } from "../Core/InputBox";
 import CartContext from "../../stores/cart-context";
 import ValidationRule from "../../models/ValidationRule";
 
@@ -44,7 +44,12 @@ class InputState {
   hasError: boolean;
   wasFocused: boolean;
 
-  constructor (name: string, value: string, hasError: boolean, wasFocused: boolean) {
+  constructor(
+    name: string,
+    value: string,
+    hasError: boolean,
+    wasFocused: boolean
+  ) {
     this.name = name;
     this.value = value;
     this.hasError = hasError;
@@ -58,16 +63,20 @@ interface FormState {
     name: InputState;
     phoneNumber: InputState;
     address: InputState;
-  }
+  };
 }
 
-interface ActionType {
-  type: string;
-  inputName: string;
-  value: string;
-  hasError?: boolean;
-  wasFocused?: boolean;
-}
+type ActionType =
+  | {
+      type: "CHANGE_INPUT";
+      inputName: string;
+      value?: string;
+      hasError?: boolean;
+      wasFocused?: boolean;
+    }
+  | {
+      type: "RESET_FORM";
+    };
 
 const INIT_STATE = {
   disabled: true,
@@ -75,8 +84,8 @@ const INIT_STATE = {
     name: new InputState("name", "", false, false),
     phoneNumber: new InputState("phoneNumber", "", false, false),
     address: new InputState("address", "", false, false),
-  }
-}
+  },
+};
 
 const formReducer = (state: FormState, action: ActionType) => {
   switch (action.type) {
@@ -86,8 +95,14 @@ const formReducer = (state: FormState, action: ActionType) => {
         [action.inputName]: {
           ...state.inputs[action.inputName as keyof FormState["inputs"]],
           value: action.value,
-          hasError: action?.hasError ?? state.inputs[action.inputName as keyof FormState["inputs"]].hasError,
-          wasFocused: action?.wasFocused ?? state.inputs[action.inputName as keyof FormState["inputs"]].wasFocused,
+          hasError:
+            action?.hasError ??
+            state.inputs[action.inputName as keyof FormState["inputs"]]
+              .hasError,
+          wasFocused:
+            action?.wasFocused ??
+            state.inputs[action.inputName as keyof FormState["inputs"]]
+              .wasFocused,
         },
       };
 
@@ -107,6 +122,8 @@ const formReducer = (state: FormState, action: ActionType) => {
       updatedFormState.disabled = isFormDisabled;
 
       return updatedFormState;
+    case "RESET_FORM":
+      return INIT_STATE;
     default:
       return state;
   }
@@ -114,10 +131,29 @@ const formReducer = (state: FormState, action: ActionType) => {
 
 const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
   const [formState, dispatchFormState] = useReducer(formReducer, INIT_STATE);
+  const nameInputRef = useRef<InputHandle>(null);
+  const phoneNumberInputRef = useRef<InputHandle>(null);
+  const addressInputRef = useRef<InputHandle>(null);
+  const inputRefs = [nameInputRef, phoneNumberInputRef, addressInputRef];
   const cartCtx = useContext(CartContext);
 
   const inputBlurHandler = (inputName: string) => {
-    return (value: string, hasError?: boolean, wasFocused?: boolean) => { dispatchFormState({ type: "CHANGE_INPUT", inputName, value, hasError, wasFocused }) };
+    return (value: string, hasError?: boolean, wasFocused?: boolean) => {
+      dispatchFormState({
+        type: "CHANGE_INPUT",
+        inputName,
+        value,
+        hasError,
+        wasFocused,
+      });
+    };
+  };
+
+  const formClearHandler = () => {
+    dispatchFormState({ type: "RESET_FORM" });
+    inputRefs.forEach((inputRef) => {
+      inputRef.current?.resetInput();
+    });
   };
 
   return (
@@ -128,6 +164,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
           label="Name"
           placeholder="Your name"
           type="text"
+          ref={nameInputRef}
           onBlurred={inputBlurHandler("name")}
           validationFunction={validationRules.name}
         />
@@ -136,6 +173,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
           label="Phone Number"
           placeholder="e.g. (+355 69 236 1634)"
           type="text"
+          ref={phoneNumberInputRef}
           onBlurred={inputBlurHandler("phoneNumber")}
           validationFunction={validationRules.phoneNumber}
         />
@@ -144,10 +182,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
           label="Address"
           placeholder="e.g. &ldquo;Prokop&rdquo; St."
           type="text"
+          ref={addressInputRef}
           onBlurred={inputBlurHandler("address")}
           validationFunction={validationRules.address}
         />
 
+        <Button type="reset" onClick={formClearHandler}>
+          Clear
+        </Button>
         <Button type="submit" disabled={formState.disabled}>
           Order Items
         </Button>

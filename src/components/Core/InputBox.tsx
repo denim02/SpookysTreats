@@ -1,9 +1,14 @@
+import { forwardRef, useImperativeHandle } from "react";
 import useInput from "../../hooks/use-input";
 import ValidationRule, {
   ValidationCallback,
 } from "../../models/ValidationRule";
 
 type InputTypes = "text" | "email" | "password" | "number" | "range" | "date";
+
+interface InputHandle {
+  resetInput: () => void;
+}
 
 interface InputBoxProps {
   type: InputTypes;
@@ -16,9 +21,19 @@ interface InputBoxProps {
   validationFunction?: ValidationRule | ValidationRule[] | ValidationCallback;
 }
 
-const InputBox: React.FC<InputBoxProps> = (
+const InputBox = forwardRef<InputHandle, InputBoxProps>(
   (
-    { type, label, name, id, placeholder, required, onBlurred, validationFunction }
+    {
+      type,
+      label,
+      name,
+      id,
+      placeholder,
+      required,
+      onBlurred,
+      validationFunction,
+    },
+    ref
   ) => {
     const {
       value,
@@ -33,11 +48,16 @@ const InputBox: React.FC<InputBoxProps> = (
       if (onBlurred) {
         onBlurred(value, inputHasError, true);
         inputBlurHandler();
-      }
-      else {
+      } else {
         inputBlurHandler();
       }
-    }
+    };
+
+    useImperativeHandle(ref, () => ({
+      resetInput: () => {
+        resetInputHandler();
+      },
+    }));
 
     return (
       <div className="form-control">
@@ -60,3 +80,4 @@ const InputBox: React.FC<InputBoxProps> = (
 );
 
 export default InputBox;
+export type { InputHandle };
