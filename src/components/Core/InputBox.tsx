@@ -1,12 +1,9 @@
-import { useContext, useEffect } from "react";
 import useInput from "../../hooks/use-input";
 import ValidationRule, {
   ValidationCallback,
 } from "../../models/ValidationRule";
-import FormContext, { InputState } from "../../stores/form-context";
 
 type InputTypes = "text" | "email" | "password" | "number" | "range" | "date";
-
 
 interface InputBoxProps {
   type: InputTypes;
@@ -15,16 +12,16 @@ interface InputBoxProps {
   id?: string;
   placeholder?: string;
   required?: boolean;
+  onBlurred?: (value: string, hasError?: boolean, wasFocused?: boolean) => void;
   validationFunction?: ValidationRule | ValidationRule[] | ValidationCallback;
 }
 
 const InputBox: React.FC<InputBoxProps> = (
   (
-    { type, label, name, id, placeholder, required, validationFunction }
+    { type, label, name, id, placeholder, required, onBlurred, validationFunction }
   ) => {
     const {
       value,
-      isValid: valueIsValid,
       hasError: inputHasError,
       errorMessage,
       inputBlurHandler,
@@ -32,13 +29,15 @@ const InputBox: React.FC<InputBoxProps> = (
       resetInputHandler,
     } = useInput(validationFunction ?? (() => true));
 
-    const formCtx = useContext(FormContext);
-    formCtx.upsertInput({
-        name,
-        value,
-        isValid: valueIsValid,
-        resetInput: resetInputHandler
-    } as InputState);
+    const blurHandler = () => {
+      if (onBlurred) {
+        onBlurred(value, inputHasError, true);
+        inputBlurHandler();
+      }
+      else {
+        inputBlurHandler();
+      }
+    }
 
     return (
       <div className="form-control">
@@ -51,7 +50,7 @@ const InputBox: React.FC<InputBoxProps> = (
           placeholder={placeholder ?? ""}
           required={required ?? false}
           onChange={valueChangeHandler}
-          onBlur={inputBlurHandler}
+          onBlur={blurHandler}
           className={inputHasError ? "bg-red-100 border-red-300 border" : ""}
         />
         {inputHasError && <p>{errorMessage}</p>}

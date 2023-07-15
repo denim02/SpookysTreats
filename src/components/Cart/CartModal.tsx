@@ -4,7 +4,6 @@ import CartEntries from "./CartEntries";
 import OrderForm from "./OrderForm";
 import CartContext from "../../stores/cart-context";
 import { CSSTransition } from "react-transition-group";
-import { FormContextProvider } from "../../stores/form-context";
 
 interface CartModalProps {
   onCloseModal: () => void;
@@ -62,12 +61,10 @@ const CartModal: React.FC<CartModalProps> = ({ onCloseModal }) => {
         mountOnEnter
         unmountOnExit
       >
-        <FormContextProvider>
-          <OrderForm
-            totalPrice={totalPriceString}
-            onChangePage={changeVisiblePageHandler}
-          />
-        </FormContextProvider>
+        <OrderForm
+          totalPrice={totalPriceString}
+          onChangePage={changeVisiblePageHandler}
+        />
       </CSSTransition>
     </Modal>
   );

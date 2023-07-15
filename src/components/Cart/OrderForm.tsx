@@ -1,8 +1,7 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useReducer } from "react";
 import Button from "../Core/Button";
 import InputBox from "../Core/InputBox";
 import CartContext from "../../stores/cart-context";
-import FormContext from "../../stores/form-context";
 import ValidationRule from "../../models/ValidationRule";
 
 interface OrderFormProps {
@@ -39,12 +38,87 @@ const validationRules = {
   ],
 };
 
-const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
-  const [isFormDisabled, setIsFormDisabled] = useState<boolean>(true);
-  const cartCtx = useContext(CartContext);
-  const formCtx = useContext(FormContext);
+class InputState {
+  name: string;
+  value: string;
+  hasError: boolean;
+  wasFocused: boolean;
 
-  const disabled = formCtx.isDisabled;
+  constructor (name: string, value: string, hasError: boolean, wasFocused: boolean) {
+    this.name = name;
+    this.value = value;
+    this.hasError = hasError;
+    this.wasFocused = wasFocused;
+  }
+}
+
+interface FormState {
+  disabled: boolean;
+  inputs: {
+    name: InputState;
+    phoneNumber: InputState;
+    address: InputState;
+  }
+}
+
+interface ActionType {
+  type: string;
+  inputName: string;
+  value: string;
+  hasError?: boolean;
+  wasFocused?: boolean;
+}
+
+const INIT_STATE = {
+  disabled: true,
+  inputs: {
+    name: new InputState("name", "", false, false),
+    phoneNumber: new InputState("phoneNumber", "", false, false),
+    address: new InputState("address", "", false, false),
+  }
+}
+
+const formReducer = (state: FormState, action: ActionType) => {
+  switch (action.type) {
+    case "CHANGE_INPUT":
+      const updatedInputs = {
+        ...state.inputs,
+        [action.inputName]: {
+          ...state.inputs[action.inputName as keyof FormState["inputs"]],
+          value: action.value,
+          hasError: action?.hasError ?? state.inputs[action.inputName as keyof FormState["inputs"]].hasError,
+          wasFocused: action?.wasFocused ?? state.inputs[action.inputName as keyof FormState["inputs"]].wasFocused,
+        },
+      };
+
+      const updatedFormState = {
+        ...state,
+        inputs: updatedInputs,
+      };
+
+      let isFormDisabled = false;
+      for (const inputName in updatedInputs) {
+        const input = updatedInputs[inputName as keyof FormState["inputs"]];
+        if (input.hasError || !input.wasFocused) {
+          isFormDisabled = true;
+          break;
+        }
+      }
+      updatedFormState.disabled = isFormDisabled;
+
+      return updatedFormState;
+    default:
+      return state;
+  }
+};
+
+const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
+  const [formState, dispatchFormState] = useReducer(formReducer, INIT_STATE);
+  const cartCtx = useContext(CartContext);
+
+  const inputBlurHandler = (inputName: string) => {
+    return (value: string, hasError?: boolean, wasFocused?: boolean) => { dispatchFormState({ type: "CHANGE_INPUT", inputName, value, hasError, wasFocused }) };
+  };
 
   return (
     <div>
@@ -54,6 +128,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
           label="Name"
           placeholder="Your name"
           type="text"
+          onBlurred={inputBlurHandler("name")}
           validationFunction={validationRules.name}
         />
         <InputBox
@@ -61,6 +136,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
           label="Phone Number"
           placeholder="e.g. (+355 69 236 1634)"
           type="text"
+          onBlurred={inputBlurHandler("phoneNumber")}
           validationFunction={validationRules.phoneNumber}
         />
         <InputBox
@@ -68,10 +144,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ onChangePage }) => {
           label="Address"
           placeholder="e.g. &ldquo;Prokop&rdquo; St."
           type="text"
+          onBlurred={inputBlurHandler("address")}
           validationFunction={validationRules.address}
         />
 
-        <Button type="submit" disabled={isFormDisabled}>
+        <Button type="submit" disabled={formState.disabled}>
           Order Items
         </Button>
       </form>

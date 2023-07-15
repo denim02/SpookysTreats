@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from "react";
+import { useCallback, useState } from "react";
 import ValidationRule, { ValidationCallback } from "../models/ValidationRule";
 
 type AcceptedValidationParameter =
@@ -40,7 +40,6 @@ const validateWithCallback = (
 const useInput = (validationLogic: AcceptedValidationParameter) => {
   const [enteredValue, setEnteredValue] = useState("");
   const [wasFocused, setWasFocused] = useState(false);
-  console.log("re-rendered");
 
   let validationResult: ValidationReturnTuple = [true, ""];
 

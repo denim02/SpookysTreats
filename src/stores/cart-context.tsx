@@ -14,9 +14,7 @@ const CartContextProvider: React.FC<PropsWithChildren> = (props) => {
   const [entries, setEntries] = useState<CartEntry[]>([]);
 
   const addToCart = (product: Product, amountToAdd = 1) => {
-    console.log("before setEntries called", amountToAdd);
     setEntries((prevState) => {
-      console.log("called");
 
       // Check if empty
       if (entries.length === 0) return [new CartEntry(product, amountToAdd)];
