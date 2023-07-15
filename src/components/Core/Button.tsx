@@ -3,7 +3,8 @@ import classNames from "classnames";
 import CSSTransition from "react-transition-group/CSSTransition";
 
 interface ButtonProps {
-  className: string;
+  className?: string;
+  disabled?: boolean;
   onClick?: (event: React.MouseEvent) => void;
   type?: "submit" | "button" | "reset";
 }
@@ -13,6 +14,7 @@ const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
   onClick,
   children,
   type = "button",
+  disabled,
 }) => {
   const [buttonAnimationIsRunning, setButtonAnimationIsRunning] =
     useState<boolean>(false);
@@ -26,14 +28,18 @@ const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
     }, 150);
   };
 
-  const btnClass = classNames({
-    "text-sm rounded-3xl font-bold text-center transition duration-500": true,
-    "bg-header-color hover:bg-white hover:text-header-color hover:border-header-color hover:border-2": !className.includes("bg-"),
-    "text-white": !className.includes("text-"),
-    "px-8": !className.includes("px-"),
-    "py-1": !className.includes("py-"),
-    [className]: true,
-  });
+  const btnClass = className
+    ? classNames({
+        "text-sm rounded-3xl font-bold text-center transition duration-500":
+          true,
+        "bg-header-color hover:bg-white hover:text-header-color hover:border-header-color hover:border-2":
+          !className.includes("bg-"),
+        "text-white": !className.includes("text-"),
+        "px-8": !className.includes("px-"),
+        "py-1": !className.includes("py-"),
+        [className]: true,
+      })
+    : "py-1 px-8 text-sm rounded-3xl font-bold text-white text-center transition duration-500 bg-header-color hover:bg-white hover:text-header-color hover:border-header-color hover:border-2 disabled:bg-gray-200";
 
   return (
     <CSSTransition
@@ -45,6 +51,7 @@ const Button: React.FC<PropsWithChildren<ButtonProps>> = ({
       <button
         ref={buttonRef}
         type={type}
+        disabled={disabled ?? false}
         className={btnClass}
         onClick={buttonClickHandler}
       >
