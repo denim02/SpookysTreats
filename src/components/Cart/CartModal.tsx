@@ -1,8 +1,16 @@
-import React, { useContext, useMemo } from "react";
-import CartContext from "../../stores/cart-context";
-import CartItem from "./CartItem";
+import React, { useState, useContext, useMemo } from "react";
 import Modal from "../Core/Modal";
-import Button from "../Core/Button";
+import CartEntries from "./CartEntries";
+import OrderForm from "./OrderForm";
+import CartContext from "../../stores/cart-context";
+import { CSSTransition } from "react-transition-group";
+import { FormContextProvider } from "../../stores/form-context";
+
+interface CartModalProps {
+  onCloseModal: () => void;
+}
+
+type VisiblePageState = "CartEntries" | "OrderForm";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -10,59 +18,57 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
 });
 
-interface CartModalProps {
-  onCloseModal: () => void;
-}
+const CartModal: React.FC<CartModalProps> = ({ onCloseModal }) => {
+  const [visiblePage, setVisiblePage] =
+    useState<VisiblePageState>("CartEntries");
 
-const CartModal: React.FC<CartModalProps> = ({onCloseModal}) => {
+  const changeVisiblePageHandler = () => {
+    if (visiblePage == "CartEntries") setVisiblePage("OrderForm");
+    else setVisiblePage("CartEntries");
+  };
+
   const cartCtx = useContext(CartContext);
+  const { entries } = cartCtx;
 
   const calculatePrice = () => {
-    if (cartCtx.entries.length === 0) return 0;
+    if (entries.length === 0) return 0;
 
-    return cartCtx.entries.reduce((accumulator, currentEntry) => {
+    return entries.reduce((accumulator, currentEntry) => {
       return accumulator + currentEntry.amount * currentEntry.product.price;
     }, 0);
   };
-  const price = useMemo(calculatePrice, [cartCtx.entries]);
+  const totalPrice = useMemo(calculatePrice, [entries]);
+  const totalPriceString = priceFormatter.format(totalPrice);
 
   return (
-    <Modal className="w-3/4 max-w-3xl">
-      <div>
-        {cartCtx.entries.length === 0 && <p>No entries currently in the cart.</p>}
-        {cartCtx?.entries.map((entry) => (
-          <CartItem
-            key={entry.product.id}
-            item={entry.product}
-            amount={entry.amount}
-            onAddItem={() => {
-              cartCtx.addToCart(entry.product);
-            }}
-            onRemoveItem={() => {
-              cartCtx.removeFromCart(entry.product);
-            }}
+    <Modal className="w-3/4 max-w-3xl overflow-hidden">
+      <CSSTransition
+        in={visiblePage === "CartEntries"}
+        timeout={300}
+        classNames="entries-page"
+        mountOnEnter
+        unmountOnExit
+      >
+        <CartEntries
+          totalPrice={totalPriceString}
+          onCloseModal={onCloseModal}
+          onChangePage={changeVisiblePageHandler}
+        />
+      </CSSTransition>
+      <CSSTransition
+        in={visiblePage === "OrderForm"}
+        timeout={300}
+        classNames="order-page"
+        mountOnEnter
+        unmountOnExit
+      >
+        <FormContextProvider>
+          <OrderForm
+            totalPrice={totalPriceString}
+            onChangePage={changeVisiblePageHandler}
           />
-        ))}
-      </div>
-
-      <div className="flex justify-between mt-5">
-        <span className="text-2xl font-bold">Total Amount</span>
-        <span className="texl-2xl font-bold">
-          {priceFormatter.format(price)}
-        </span>
-      </div>
-      <div className="float-right space-x-4">
-        <Button
-          onClick={onCloseModal}
-          type="button"
-          className="text-price-color border-2 border-price-color py-2 bg-white"
-        >
-          <span className="hover:border-b-2 border-price-color transition duration-500">Close</span>
-        </Button>
-        {cartCtx.entries.length !== 0 && (
-          <Button className="bg-price-color py-2">Order</Button>
-        )}
-      </div>
+        </FormContextProvider>
+      </CSSTransition>
     </Modal>
   );
 };

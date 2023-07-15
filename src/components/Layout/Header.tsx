@@ -4,6 +4,7 @@ import CartContext from "../../stores/cart-context";
 import React, { useContext, useMemo, useState } from "react";
 import CartModal from "../Cart/CartModal";
 import Button from "../Core/Button";
+import { CSSTransition } from "react-transition-group";
 
 const Header: React.FC = () => {
   const cartCtx = useContext(CartContext);
@@ -17,7 +18,7 @@ const Header: React.FC = () => {
     setCartVisible(false);
   };
 
-  const {entries} = cartCtx;
+  const { entries } = cartCtx;
 
   const calculateTotalProductCount = () => {
     if (entries) {
@@ -53,8 +54,19 @@ const Header: React.FC = () => {
           </Button>
         </header>
       </div>
+
       {/* Cart Modal (list of items) */}
-      {isCartVisible && <CartModal onCloseModal={closeModalHandler} />}
+      <CSSTransition
+        in={isCartVisible}
+        timeout={300}
+        classNames="cart-modal"
+        mountOnEnter
+        unmountOnExit
+        onEnter={() => {document.body.classList.add("modal-open")}}
+        onExit={() => {document.body.classList.remove("modal-open")}}
+      >
+        <CartModal onCloseModal={closeModalHandler} />
+      </CSSTransition>
     </>
   );
 };
